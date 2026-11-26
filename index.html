@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>E-Surat — Sistem Arsip Keluar Masuk Surat & Bukti Upload</title>
+
+  <!-- PWA Manifest via Data URI -->
+  <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22E-Surat%20Arsip%20Digital%22%2C%22short_name%22%3A%22E-Surat%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f8fafc%22%2C%22theme_color%22%3A%22%231d4ed8%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%2520viewBox%3D%270%200%20512%20512%27%253E%253Crect%2520width%3D%27512%27%2520height%3D%27512%27%2520rx%3D%27112%27%2520fill%3D%27%25231d4ed8%27%2F%253E%253Cpath%2520fill%3D%27%2523ffffff%27%2520d%3D%27M112%20160h288c17.7%200%2032%2014.3%2032%2032v128c0%2017.7-14.3%2032-32%2032H112c-17.7%200-32-14.3-32-32V192c0-17.7%2014.3-32%2032-32zm144%20106.7l144-85.3v-10.7l-144%2085.3-144-85.3v10.7l144%2085.3z%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D' />
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS & FULL-PAGE BLOGGER OVERRIDE
+       ========================================================================== */
+    :root {
+      --bg-canvas: #f8fafc;
+      --bg-mesh-1: rgba(37, 99, 235, 0.08);
+      --bg-mesh-2: rgba(14, 165, 233, 0.08);
+      --glass-surface: rgba(255, 255, 255, 0.78);
+      --glass-surface-strong: rgba(255, 255, 255, 0.92);
+      --glass-border: rgba(226, 232, 240, 0.85);
+      --glass-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --primary-soft: #eff6ff;
+      --accent: #0284c7;
+      --success: #059669;
+      --success-soft: #ecfdf5;
+      --warning: #d97706;
+      --warning-soft: #fffbeb;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --sidebar-width: 268px;
+      --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Full Page Overlay untuk menutupi template Blogger 100% tanpa edit XML */
+    #esurat-root-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background-color: var(--bg-canvas);
+      background-image:
+        radial-gradient(at 0% 0%, var(--bg-mesh-1) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, var(--bg-mesh-2) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+      color: var(--text-main);
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scrollbar Styling */
+    #esurat-root-shell::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    #esurat-root-shell::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 99px;
+    }
+
+    /* Glassmorphism Utilities */
+    .glass-card {
+      background: var(--glass-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: var(--radius-xl);
+    }
+
+    .glass-panel-strong {
+      background: var(--glass-surface-strong);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* Preview Banner */
+    .preview-banner {
+      background: linear-gradient(90deg, #1e293b, #0f172a);
+      color: #f8fafc;
+      padding: 8px 16px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      z-index: 1000010;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+    .preview-badge {
+      background: #f59e0b;
+      color: #0f172a;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ==========================================================================
+       LOGIN SCREEN
+       ========================================================================== */
+    .login-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      min-height: calc(100vh - 36px);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      padding: 36px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .brand-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1d4ed8, #0284c7);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 20px -5px rgba(29, 78, 216, 0.35);
+      margin-bottom: 14px;
+    }
+
+    .brand-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .role-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: rgba(241, 245, 249, 0.9);
+      padding: 5px;
+      border-radius: 12px;
+      margin-bottom: 22px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .role-tab {
+      border: none;
+      background: transparent;
+      padding: 10px 12px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+
+    .role-tab.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 13px;
+      color: var(--text-light);
+      pointer-events: none;
+      display: flex;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid #cbd5e1;
+      background: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      color: var(--text-main);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-control.has-icon {
+      padding-left: 40px;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+      background: #ffffff;
+    }
+
+    textarea.form-control {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.22);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--text-main);
+      border-color: #cbd5e1;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    .btn-soft {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+    .btn-soft:hover:not(:disabled) {
+      background: #dbeafe;
+    }
+
+    .btn-danger-soft {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+    .btn-danger-soft:hover:not(:disabled) {
+      background: #fee2e2;
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .quick-login-box {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px dashed #cbd5e1;
+    }
+
+    .quick-login-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .quick-login-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* ==========================================================================
+       APP SHELL (SIDEBAR DESKTOP & BOTTOM NAV MOBILE)
+       ========================================================================== */
+    .app-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Desktop Fixed Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--glass-surface-strong);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1000001;
+    }
+
+    .has-preview-banner .sidebar {
+      top: 34px;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 8px 22px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1d4ed8, #0284c7);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      text-align: left;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    .nav-item:hover {
+      background: rgba(241, 245, 249, 0.9);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 6px 16px -4px rgba(29, 78, 216, 0.35);
+    }
+
+    .sidebar-footer {
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .user-profile-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+
+    .avatar-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 28px 32px 48px;
+      max-width: calc(100vw - var(--sidebar-width));
+    }
+
+    .mobile-topbar {
+      display: none;
+    }
+
+    .bottom-nav {
+      display: none;
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+    }
+
+    .page-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* ==========================================================================
+       DASHBOARD & DATA CARDS
+       ========================================================================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .stat-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .stat-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Toolbar & Filter */
+    .toolbar-card {
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+      max-width: 380px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Table Styles */
+    .table-card {
+      overflow: hidden;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(248, 250, 252, 0.9);
+      padding: 14px 18px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 15px 18px;
+      font-size: 13.5px;
+      color: var(--text-main);
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(248, 250, 252, 0.65);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-blue { background: #eff6ff; color: #1d4ed8; }
+    .badge-green { background: #ecfdf5; color: #059669; }
+    .badge-amber { background: #fffbeb; color: #d97706; }
+    .badge-slate { background: #f1f5f9; color: #475569; }
+
+    /* Gallery Grid for Bukti Upload */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .doc-card {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: var(--transition);
+    }
+    .doc-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px -6px rgba(15, 23, 42, 0.08);
+    }
+
+    .doc-preview-thumb {
+      height: 140px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .doc-preview-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Upload Dropzone */
+    .upload-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      background: rgba(248, 250, 252, 0.7);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .upload-zone:hover, .upload-zone.has-file {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    /* Empty State */
+    .empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: #f1f5f9;
+      color: var(--text-light);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    /* ==========================================================================
+       MODAL & TOAST
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(6px);
+      z-index: 1000020;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+      border: 1px solid #e2e8f0;
+      animation: modalIn 0.2s ease-out;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 18px;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000050;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+      animation: slideInRight 0.25s ease-out;
+    }
+    .toast.success { border-left: 4px solid #10b981; }
+    .toast.error { border-left: 4px solid #ef4444; }
+    .toast.info { border-left: 4px solid #3b82f6; }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(24px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ==========================================================================
+       RESPONSIVE MEDIA QUERIES (MOBILE BOTTOM BAR & ADAPTIVE LAYOUT)
+       ========================================================================== */
+    @media (max-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none !important;
+      }
+
+      .mobile-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        background: var(--glass-surface-strong);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--glass-border);
+        position: sticky;
+        top: 0;
+        z-index: 1000002;
+      }
+
+      .main-content {
+        margin-left: 0;
+        max-width: 100vw;
+        padding: 18px 16px 96px;
+      }
+
+      /* Floating Bottom Navigation Bar */
+      .bottom-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        position: fixed;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(203, 213, 225, 0.9);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+        border-radius: 18px;
+        padding: 6px 4px;
+        z-index: 1000005;
+      }
+
+      .bottom-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 7px 4px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 10.5px;
+        font-weight: 600;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .bottom-nav-item.active {
+        color: var(--primary);
+        background: var(--primary-soft);
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .stat-card {
+        padding: 14px;
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .form-row-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div id="esurat-root-shell">
+  <!-- Banner Mode Preview (Otomatis hilang jika IS_PREVIEW = false) -->
+  <div id="preview-banner" class="preview-banner hidden">
+    <span class="preview-badge">Mode Preview Aktif</span>
+    <span>Data tersimpan sementara di memori lokal browser.</span>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ========================================================================
+       HALAMAN LOGIN (HYBRID: ADMIN VIA SUPABASE AUTH | STAF VIA TABEL DB)
+       ======================================================================== -->
+  <div id="login-view" class="login-wrapper">
+    <div class="glass-card login-card">
+      <div class="brand-header">
+        <div class="brand-logo">
+          <i data-lucide="mail-check" style="width: 28px; height: 28px;"></i>
+        </div>
+        <h1 class="brand-title">E-Surat Digital</h1>
+        <p class="brand-subtitle">Sistem Manajemen Keluar Masuk Surat & Bukti Upload</p>
+      </div>
+
+      <div class="role-tabs">
+        <button type="button" class="role-tab active" id="tab-staf" onclick="window.switchLoginRole('staf')">
+          <i data-lucide="user-check" style="width: 15px; height: 15px;"></i> Staf / Unit
+        </button>
+        <button type="button" class="role-tab" id="tab-admin" onclick="window.switchLoginRole('admin')">
+          <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i> Admin TU
+        </button>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" id="login-id-label">Username / NIP Staf</label>
+          <div class="input-wrap">
+            <span class="input-icon"><i data-lucide="user" style="width: 17px; height: 17px;"></i></span>
+            <input type="text" id="login-identifier" class="form-control has-icon" placeholder="Masukkan username staf" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kata Sandi</label>
+          <div class="input-wrap">
+            <span class="input-icon"><i data-lucide="lock" style="width: 17px; height: 17px;"></i></span>
+            <input type="password" id="login-password" class="form-control has-icon" placeholder="••••••••" required />
+          </div>
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block" style="margin-top: 8px;">
+          <i data-lucide="log-in" style="width: 17px; height: 17px;"></i>
+          <span>Masuk ke Aplikasi</span>
+        </button>
+      </form>
+
+      <!-- Pintasan Login Cepat (Hanya tampil saat IS_PREVIEW = true) -->
+      <div id="preview-quick-login" class="quick-login-box hidden">
+        <div class="quick-login-title">Pintasan Uji Coba (Preview)</div>
+        <div class="quick-login-grid">
+          <button type="button" class="btn btn-soft btn-sm" onclick="window.quickPreviewLogin('admin')">
+            <i data-lucide="shield" style="width: 14px; height: 14px;"></i> Demo Admin
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.quickPreviewLogin('staf')">
+            <i data-lucide="user" style="width: 14px; height: 14px;"></i> Demo Staf
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       HALAMAN UTAMA APLIKASI (DASHBOARD & MENU)
+       ======================================================================== -->
+  <div id="app-view" class="app-layout hidden">
+    <!-- Sidebar Desktop -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <i data-lucide="mail-check" style="width: 22px; height: 22px;"></i>
+        </div>
+        <div>
+          <div style="font-weight: 800; font-size: 16px; line-height: 1.2;">E-Surat</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Arsip & Bukti Digital</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" id="desktop-nav">
+        <button class="nav-item active" data-menu="dashboard" onclick="window.navigate('dashboard')">
+          <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-menu="surat-masuk" onclick="window.navigate('surat-masuk')">
+          <i data-lucide="inbox" style="width: 18px; height: 18px;"></i>
+          <span>Surat Masuk</span>
+        </button>
+        <button class="nav-item" data-menu="surat-keluar" onclick="window.navigate('surat-keluar')">
+          <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+          <span>Surat Keluar</span>
+        </button>
+        <button class="nav-item" data-menu="galeri-bukti" onclick="window.navigate('galeri-bukti')">
+          <i data-lucide="folder-check" style="width: 18px; height: 18px;"></i>
+          <span>Galeri Bukti Upload</span>
+        </button>
+        <button class="nav-item admin-only" data-menu="manajemen-staf" onclick="window.navigate('manajemen-staf')">
+          <i data-lucide="users" style="width: 18px; height: 18px;"></i>
+          <span>Manajemen Staf</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-pill">
+          <div class="avatar-circle" id="sidebar-avatar">AD</div>
+          <div style="overflow: hidden;">
+            <div id="sidebar-user-name" style="font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Administrator</div>
+            <div id="sidebar-user-role" style="font-size: 11px; color: var(--text-muted);">Admin Tata Usaha</div>
+          </div>
+        </div>
+        <button class="btn btn-danger-soft btn-sm btn-block" onclick="window.handleLogout()">
+          <i data-lucide="log-out" style="width: 15px; height: 15px;"></i> Keluar
+        </button>
+      </div>
+    </aside>
+
+    <!-- Konten Utama -->
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+      <!-- Mobile Topbar -->
+      <header class="mobile-topbar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="sidebar-brand-icon" style="width: 34px; height: 34px; border-radius: 10px;">
+            <i data-lucide="mail-check" style="width: 18px; height: 18px;"></i>
+          </div>
+          <div>
+            <div style="font-weight: 800; font-size: 15px;">E-Surat Digital</div>
+            <div id="mobile-user-label" style="font-size: 11px; color: var(--text-muted);">Staf</div>
+          </div>
+        </div>
+        <button class="btn btn-danger-soft btn-sm" onclick="window.handleLogout()">
+          <i data-lucide="log-out" style="width: 14px; height: 14px;"></i> Keluar
+        </button>
+      </header>
+
+      <main class="main-content" id="main-view-container">
+        <!-- Konten dinamis dirender oleh JS di sini -->
+      </main>
+    </div>
+
+    <!-- Floating Bottom Navigation Bar (Mobile) -->
+    <nav class="bottom-nav" id="mobile-bottom-nav">
+      <button class="bottom-nav-item active" data-menu="dashboard" onclick="window.navigate('dashboard')">
+        <i data-lucide="layout-dashboard" style="width: 19px; height: 19px;"></i>
+        <span>Beranda</span>
+      </button>
+      <button class="bottom-nav-item" data-menu="surat-masuk" onclick="window.navigate('surat-masuk')">
+        <i data-lucide="inbox" style="width: 19px; height: 19px;"></i>
+        <span>Masuk</span>
+      </button>
+      <button class="bottom-nav-item" data-menu="surat-keluar" onclick="window.navigate('surat-keluar')">
+        <i data-lucide="send" style="width: 19px; height: 19px;"></i>
+        <span>Keluar</span>
+      </button>
+      <button class="bottom-nav-item" data-menu="galeri-bukti" onclick="window.navigate('galeri-bukti')">
+        <i data-lucide="folder-check" style="width: 19px; height: 19px;"></i>
+        <span>Bukti</span>
+      </button>
+      <button class="bottom-nav-item admin-only" data-menu="manajemen-staf" onclick="window.navigate('manajemen-staf')">
+        <i data-lucide="users" style="width: 19px; height: 19px;"></i>
+        <span>Staf</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ========================================================================
+       MODAL FORM & PRATINJAU BUKTI
+       ======================================================================== -->
+  <div id="app-modal" class="modal-backdrop" onclick="if(event.target === this) window.closeModal()">
+    <div class="modal-box" id="modal-content-box"></div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     JAVASCRIPT MODULE (LOGIKA SUPABASE, PWA BLOB SW, & STATE MANAGEMENT)
+     ========================================================================== -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  // ==========================================================================
+  // KONFIGURASI DEPLOYMENT (UBAH KE FALSE SAAT DEPLOY KE BLOGGER)
+  // ==========================================================================
+  const IS_PREVIEW = faslse; // Ubah menjadi false SAAT DEPLOY agar mode preview & data dummy hilang dan terhubung 100% ke Supabase
+  const SUPABASE_URL = "https://nqiauvneicqdhupakerw.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_IPljEaNBdGGodXh8_aoH-w_Oi4ExHXn";
+  const STORAGE_BUCKET = "bukti-surat";
+
+  // Inisialisasi Supabase Client (Hanya aktif jika IS_PREVIEW === false)
+  let supabase = null;
+  if (!IS_PREVIEW) {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  // Registrasi PWA Service Worker Dinamis via Blob
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE_NAME = 'esurat-pwa-v1';
+      self.addEventListener('install', (e) => self.skipWaiting());
+      self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+      self.addEventListener('fetch', (e) => {
+        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+      });
+    `;
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+
+  // ==========================================================================
+  // STATE APLIKASI & DATA DUMMY MINIMALIS (HANYA UNTUK IS_PREVIEW = TRUE)
+  // ==========================================================================
+  const state = {
+    user: null, // { role: 'admin' | 'staf', name, identifier, divisi }
+    loginRole: 'staf',
+    activeMenu: 'dashboard',
+    searchQuery: '',
+    filterStatus: 'ALL',
+    filterGalleryType: 'ALL',
+    suratMasuk: [],
+    suratKeluar: [],
+    stafUsers: []
+  };
+
+  function initPreviewDummyData() {
+    if (!IS_PREVIEW) return;
+    const svgSample = "data:image/svg+xml;utf8," + encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+        <rect width="600" height="400" fill="#f8fafc"/>
+        <rect x="40" y="30" width="520" height="340" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+        <rect x="75" y="65" width="180" height="16" rx="4" fill="#1d4ed8"/>
+        <rect x="75" y="95" width="450" height="10" rx="4" fill="#94a3b8"/>
+        <rect x="75" y="120" width="420" height="10" rx="4" fill="#cbd5e1"/>
+        <rect x="75" y="145" width="440" height="10" rx="4" fill="#cbd5e1"/>
+        <rect x="75" y="190" width="240" height="12" rx="4" fill="#475569"/>
+        <circle cx="460" cy="285" r="42" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="460" y="290" font-family="sans-serif" font-size="11" font-weight="bold" fill="#1d4ed8" text-anchor="middle">TERVERIFIKASI</text>
+      </svg>`
+    );
+
+    state.stafUsers = [
+      {
+        id: 'staf-1',
+        username: 'staf01',
+        password: '123',
+        nama_lengkap: 'Rina Marlina, S.Adm',
+        divisi: 'Sekretariat & Umum'
+      }
+    ];
+
+    state.suratMasuk = [
+      {
+        id: 'sm-1',
+        no_agenda: 'AGD-M/2026/001',
+        no_surat: '005/UND-DISDIK/XI/2026',
+        tanggal_surat: '2026-11-24',
+        tanggal_diterima: '2026-11-25',
+        pengirim: 'Dinas Pendidikan & Kebudayaan',
+        perihal: 'Undangan Rapat Koordinasi Digitalisasi Arsip Daerah',
+        disposisi: 'Diteruskan ke Kepala Bagian Umum',
+        status: 'Didisposisi',
+        bukti_url: svgSample,
+        nama_file: 'scan_undangan_disdik.svg',
+        diinput_oleh: 'Rina Marlina, S.Adm',
+        created_at: '2026-11-25T09:15:00Z'
+      }
+    ];
+
+    state.suratKeluar = [
+      {
+        id: 'sk-1',
+        no_agenda: 'AGD-K/2026/001',
+        no_surat: '421/108/TU/XI/2026',
+        tanggal_surat: '2026-11-26',
+        tujuan: 'Kantor Pelayanan Perbendaharaan Negara',
+        perihal: 'Pengajuan Laporan Pertanggungjawaban Anggaran Triwulan IV',
+        status: 'Terkirim',
+        bukti_url: svgSample,
+        nama_file: 'resi_pengiriman_lpj.svg',
+        diinput_oleh: 'Admin Tata Usaha',
+        created_at: '2026-11-26T10:30:00Z'
+      }
+    ];
+  }
+
+  // ==========================================================================
+  // UTILITAS UI (TOAST, MODAL, FORMATTER)
+  // ==========================================================================
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const iconName = type === 'success' ? 'check-circle-2' : type === 'error' ? 'alert-circle' : 'info';
+    toast.innerHTML = `<i data-lucide="${iconName}" style="width:18px;height:18px;"></i><span>${message}</span>`;
+    container.appendChild(toast);
+    lucide.createIcons();
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(20px)';
+      toast.style.transition = 'all 0.25s ease';
+      setTimeout(() => toast.remove(), 260);
+    }, 3400);
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatDateID(dateStr) {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  window.openModal = function(htmlContent) {
+    const box = document.getElementById('modal-content-box');
+    box.innerHTML = htmlContent;
+    document.getElementById('app-modal').classList.add('open');
+    lucide.createIcons();
+  };
+
+  window.closeModal = function() {
+    document.getElementById('app-modal').classList.remove('open');
+    document.getElementById('modal-content-box').innerHTML = '';
+  };
+
+  // ==========================================================================
+  // SISTEM AUTENTIKASI HYBRID (ADMIN SUPABASE AUTH & STAF TABEL DB)
+  // ==========================================================================
+  window.switchLoginRole = function(role) {
+    state.loginRole = role;
+    document.getElementById('tab-staf').classList.toggle('active', role === 'staf');
+    document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
+    const label = document.getElementById('login-id-label');
+    const input = document.getElementById('login-identifier');
+    if (role === 'admin') {
+      label.textContent = 'Email Administrator';
+      input.type = 'email';
+      input.placeholder = 'admin@instansi.go.id';
+    } else {
+      label.textContent = 'Username / NIP Staf';
+      input.type = 'text';
+      input.placeholder = 'Masukkan username staf';
+    }
+    input.value = '';
+    document.getElementById('login-password').value = '';
+  };
+
+  window.quickPreviewLogin = function(role) {
+    if (!IS_PREVIEW) return;
+    if (role === 'admin') {
+      state.user = {
+        role: 'admin',
+        name: 'Admin Tata Usaha',
+        identifier: 'admin@instansi.go.id',
+        divisi: 'Subbagian Tata Usaha'
+      };
+    } else {
+      const sampleStaf = state.stafUsers[0] || { nama_lengkap: 'Staf Unit', username: 'staf01', divisi: 'Umum' };
+      state.user = {
+        role: 'staf',
+        name: sampleStaf.nama_lengkap,
+        identifier: sampleStaf.username,
+        divisi: sampleStaf.divisi
+      };
+    }
+    enterAppShell();
+    showToast(`Berhasil masuk sebagai ${state.user.name} (Mode Preview)`, 'success');
+  };
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const identifier = document.getElementById('login-identifier').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    const btn = document.getElementById('btn-login-submit');
+    btn.disabled = true;
+
+    try {
+      if (IS_PREVIEW) {
+        // Simulasi Login Lokal pada Mode Preview
+        if (state.loginRole === 'admin') {
+          state.user = {
+            role: 'admin',
+            name: 'Admin Tata Usaha',
+            identifier: identifier || 'admin@preview.local',
+            divisi: 'Tata Usaha'
+          };
+          enterAppShell();
+          showToast('Login Admin berhasil (Mode Preview)', 'success');
+        } else {
+          const found = state.stafUsers.find(u => u.username === identifier && u.password === password);
+          if (!found) throw new Error('Username atau password staf tidak cocok (Coba: staf01 / 123)');
+          state.user = {
+            role: 'staf',
+            name: found.nama_lengkap,
+            identifier: found.username,
+            divisi: found.divisi
+          };
+          enterAppShell();
+          showToast(`Selamat datang, ${found.nama_lengkap}`, 'success');
+        }
+      } else {
+        // MODE PRODUKSI: 100% TERHUBUNG KE SUPABASE
+        if (state.loginRole === 'admin') {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: identifier,
+            password: password
+          });
+          if (error) throw error;
+          state.user = {
+            role: 'admin',
+            name: data.user.email.split('@')[0].toUpperCase(),
+            identifier: data.user.email,
+            divisi: 'Administrator Utama'
+          };
+          localStorage.setItem('esurat_session', JSON.stringify(state.user));
+          await enterAppShell();
+          showToast('Login Administrator berhasil', 'success');
+        } else {
+          // Validasi User/Staf langsung ke tabel staf_users di Supabase
+          const { data, error } = await supabase
+            .from('staf_users')
+            .select('*')
+            .eq('username', identifier)
+            .eq('password', password)
+            .maybeSingle();
+
+          if (error) throw error;
+          if (!data) throw new Error('Username atau kata sandi staf tidak valid.');
+
+          state.user = {
+            role: 'staf',
+            name: data.nama_lengkap,
+            identifier: data.username,
+            divisi: data.divisi
+          };
+          localStorage.setItem('esurat_session', JSON.stringify(state.user));
+          await enterAppShell();
+          showToast(`Selamat datang, ${data.nama_lengkap}`, 'success');
+        }
+      }
+    } catch (err) {
+      showToast(err.message || 'Gagal melakukan autentikasi', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  window.handleLogout = async function() {
+    try {
+      if (!IS_PREVIEW && state.user?.role === 'admin' && supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    localStorage.removeItem('esurat_session');
+    state.user = null;
+    state.activeMenu = 'dashboard';
+    document.getElementById('app-view').classList.add('hidden');
+    document.getElementById('login-view').classList.remove('hidden');
+    showToast('Anda telah keluar dari sistem.', 'info');
+  };
+
+  async function enterAppShell() {
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('app-view').classList.remove('hidden');
+
+    // Update Info Profil di Sidebar & Mobile
+    const initials = state.user.name.substring(0, 2).toUpperCase();
+    document.getElementById('sidebar-avatar').textContent = initials;
+    document.getElementById('sidebar-user-name').textContent = state.user.name;
+    document.getElementById('sidebar-user-role').textContent =
+      state.user.role === 'admin' ? 'Admin Tata Usaha' : `Staf • ${state.user.divisi}`;
+    document.getElementById('mobile-user-label').textContent =
+      `${state.user.name} (${state.user.role === 'admin' ? 'Admin' : 'Staf'})`;
+
+    // Sembunyikan menu khusus Admin jika role adalah Staf
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.classList.toggle('hidden', state.user.role !== 'admin');
+    });
+
+    if (!IS_PREVIEW) {
+      await fetchAllDataFromSupabase();
+    }
+    window.navigate('dashboard');
+  }
+
+  // ==========================================================================
+  // SINKRONISASI DATA SUPABASE (CRUD & STORAGE UPLOAD)
+  // ==========================================================================
+  async function fetchAllDataFromSupabase() {
+    if (IS_PREVIEW || !supabase) return;
+    try {
+      const [resMasuk, resKeluar, resStaf] = await Promise.all([
+        supabase.from('surat_masuk').select('*').order('created_at', { ascending: false }),
+        supabase.from('surat_keluar').select('*').order('created_at', { ascending: false }),
+        state.user.role === 'admin'
+          ? supabase.from('staf_users').select('*').order('created_at', { ascending: false })
+          : Promise.resolve({ data: [] })
+      ]);
+
+      if (resMasuk.error) throw resMasuk.error;
+      if (resKeluar.error) throw resKeluar.error;
+      if (resStaf.error) throw resStaf.error;
+
+      state.suratMasuk = resMasuk.data || [];
+      state.suratKeluar = resKeluar.data || [];
+      state.stafUsers = resStaf.data || [];
+    } catch (err) {
+      showToast('Gagal memuat data dari server: ' + err.message, 'error');
+    }
+  }
+
+  async function uploadBuktiFile(file, folder) {
+    if (!file) return { url: null, name: null };
+
+    if (IS_PREVIEW) {
+      // Konversi ke Data URL lokal untuk pratinjau langsung
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ url: reader.result, name: file.name });
+        reader.readAsDataURL(file);
+      });
+    } else {
+      // Upload ke Supabase Storage Bucket 'bukti-surat'
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${folder}/${Date.now()}_${cleanName}`;
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) throw new Error('Gagal mengunggah file bukti: ' + uploadError.message);
+
+      const { data: publicUrlData } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(filePath);
+
+      return { url: publicUrlData.publicUrl, name: file.name };
+    }
+  }
+
+  // ==========================================================================
+  // NAVIGASI & RENDER HALAMAN
+  // ==========================================================================
+  window.navigate = function(menu) {
+    if (menu === 'manajemen-staf' && state.user?.role !== 'admin') return;
+    state.activeMenu = menu;
+    state.searchQuery = '';
+    state.filterStatus = 'ALL';
+
+    document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.menu === menu);
+    });
+
+    renderCurrentView();
+  };
+
+  function renderCurrentView() {
+    const container = document.getElementById('main-view-container');
+    switch (state.activeMenu) {
+      case 'dashboard':
+        container.innerHTML = renderDashboard();
+        break;
+      case 'surat-masuk':
+        container.innerHTML = renderSuratMasukPage();
+        break;
+      case 'surat-keluar':
+        container.innerHTML = renderSuratKeluarPage();
+        break;
+      case 'galeri-bukti':
+        container.innerHTML = renderGaleriBuktiPage();
+        break;
+      case 'manajemen-staf':
+        container.innerHTML = renderManajemenStafPage();
+        break;
+    }
+    lucide.createIcons();
+  }
+
+  // --------------------------------------------------------------------------
+  // 1. VIEW: DASHBOARD RINGKASAN
+  // --------------------------------------------------------------------------
+  function renderDashboard() {
+    const totalMasuk = state.suratMasuk.length;
+    const totalKeluar = state.suratKeluar.length;
+    const totalBukti =
+      state.suratMasuk.filter(s => s.bukti_url).length +
+      state.suratKeluar.filter(s => s.bukti_url).length;
+    const totalArsip = totalMasuk + totalKeluar;
+
+    const recentCombined = [
+      ...state.suratMasuk.map(item => ({ ...item, jenis: 'Masuk', pihak: item.pengirim })),
+      ...state.suratKeluar.map(item => ({ ...item, jenis: 'Keluar', pihak: item.tujuan }))
+    ]
+      .sort((a, b) => new Date(b.created_at || b.tanggal_surat) - new Date(a.created_at || a.tanggal_surat))
+      .slice(0, 6);
+
+    return `
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Dashboard Ringkasan</h2>
+          <p class="page-desc">Pantau statistik lalu lintas surat dan kelengkapan bukti digital secara real-time.</p>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="window.openSuratMasukModal()">
+            <i data-lucide="plus" style="width:15px;height:15px;"></i> Catat Surat Masuk
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.openSuratKeluarModal()">
+            <i data-lucide="send" style="width:15px;height:15px;"></i> Catat Surat Keluar
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="glass-card stat-card">
+          <div>
+            <div class="stat-label">Surat Masuk</div>
+            <div class="stat-value">${totalMasuk}</div>
+            <div class="stat-sub">Total agenda diterima</div>
+          </div>
+          <div class="stat-icon" style="background:#eff6ff; color:#1d4ed8;">
+            <i data-lucide="inbox" style="width:22px;height:22px;"></i>
+          </div>
+        </div>
+
+        <div class="glass-card stat-card">
+          <div>
+            <div class="stat-label">Surat Keluar</div>
+            <div class="stat-value">${totalKeluar}</div>
+            <div class="stat-sub">Total agenda dikirim</div>
+          </div>
+          <div class="stat-icon" style="background:#ecfdf5; color:#059669;">
+            <i data-lucide="send" style="width:22px;height:22px;"></i>
+          </div>
+        </div>
+
+        <div class="glass-card stat-card">
+          <div>
+            <div class="stat-label">Bukti Terunggah</div>
+            <div class="stat-value">${totalBukti}</div>
+            <div class="stat-sub">Dari ${totalArsip} total surat</div>
+          </div>
+          <div class="stat-icon" style="background:#fffbeb; color:#d97706;">
+            <i data-lucide="file-check-2" style="width:22px;height:22px;"></i>
+          </div>
+        </div>
+
+        <div class="glass-card stat-card">
+          <div>
+            <div class="stat-label">Rasio Kelengkapan</div>
+            <div class="stat-value">${totalArsip > 0 ? Math.round((totalBukti / totalArsip) * 100) : 0}%</div>
+            <div class="stat-sub">Arsip berlampiran bukti</div>
+          </div>
+          <div class="stat-icon" style="background:#f3e8ff; color:#7e22ce;">
+            <i data-lucide="pie-chart" style="width:22px;height:22px;"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card table-card">
+        <div style="padding:18px 20px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-weight:700; font-size:15px;">Aktivitas Surat Terbaru</div>
+          <button class="btn btn-soft btn-sm" onclick="window.navigate('galeri-bukti')">Lihat Semua Bukti</button>
+        </div>
+        ${
+          recentCombined.length === 0
+            ? `<div class="empty-state">
+                <div class="empty-icon"><i data-lucide="folder-open" style="width:26px;height:26px;"></i></div>
+                <div style="font-weight:700; color:var(--text-main);">Belum ada data surat</div>
+                <p style="font-size:13px; margin-top:4px;">Mulai tambahkan agenda surat masuk atau surat keluar beserta bukti upload.</p>
+              </div>`
+            : `<div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Jenis</th>
+                      <th>No. Agenda & Surat</th>
+                      <th>Pengirim / Tujuan</th>
+                      <th>Perihal</th>
+                      <th>Tanggal</th>
+                      <th>Bukti</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${recentCombined.map(row => `
+                      <tr>
+                        <td>
+                          <span class="badge ${row.jenis === 'Masuk' ? 'badge-blue' : 'badge-green'}">
+                            ${row.jenis === 'Masuk' ? 'Surat Masuk' : 'Surat Keluar'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style="font-weight:700;">${escapeHtml(row.no_agenda)}</div>
+                          <div style="font-size:12px; color:var(--text-muted);">${escapeHtml(row.no_surat)}</div>
+                        </td>
+                        <td style="font-weight:600;">${escapeHtml(row.pihak)}</td>
+                        <td style="max-width:260px;">${escapeHtml(row.perihal)}</td>
+                        <td style="white-space:nowrap;">${formatDateID(row.tanggal_surat)}</td>
+                        <td>
+                          ${row.bukti_url
+                            ? `<button class="btn btn-soft btn-sm" onclick="window.previewDocument('${escapeHtml(row.bukti_url)}', '${escapeHtml(row.nama_file || row.no_surat)}')">
+                                <i data-lucide="eye" style="width:14px;height:14px;"></i> Lihat
+                              </button>`
+                            : `<span class="badge badge-slate">Belum Upload</span>`
+                          }
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>`
+        }
+      </div>
+    `;
+  }
+
+  // --------------------------------------------------------------------------
+  // 2. VIEW: SURAT MASUK
+  // --------------------------------------------------------------------------
+  function renderSuratMasukPage() {
+    const q = state.searchQuery.toLowerCase();
+    const filtered = state.suratMasuk.filter(item => {
+      const matchText =
+        item.no_agenda.toLowerCase().includes(q) ||
+        item.no_surat.toLowerCase().includes(q) ||
+        item.pengirim.toLowerCase().includes(q) ||
+        item.perihal.toLowerCase().includes(q);
+      const matchStatus = state.filterStatus === 'ALL' || item.status === state.filterStatus;
+      return matchText && matchStatus;
+    });
+
+    return `
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Agenda Surat Masuk</h2>
+          <p class="page-desc">Kelola pencatatan surat masuk, disposisi, dan unggah bukti fisik/scan surat.</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.openSuratMasukModal()">
+          <i data-lucide="plus-circle" style="width:17px;height:17px;"></i> Tambah Surat Masuk
+        </button>
+      </div>
+
+      <div class="glass-card toolbar-card">
+        <div class="search-box">
+          <span class="input-icon"><i data-lucide="search" style="width:16px;height:16px;"></i></span>
+          <input type="text" class="form-control has-icon" placeholder="Cari nomor surat, pengirim, perihal..."
+            value="${escapeHtml(state.searchQuery)}"
+            oninput="window.updateSearch(this.value)" />
+        </div>
+        <div class="filter-group">
+          <select class="form-control" style="width:auto;" onchange="window.updateStatusFilter(this.value)">
+            <option value="ALL" ${state.filterStatus === 'ALL' ? 'selected' : ''}>Semua Status</option>
+            <option value="Diterima" ${state.filterStatus === 'Diterima' ? 'selected' : ''}>Diterima</option>
+            <option value="Didisposisi" ${state.filterStatus === 'Didisposisi' ? 'selected' : ''}>Didisposisi</option>
+            <option value="Selesai" ${state.filterStatus === 'Selesai' ? 'selected' : ''}>Selesai</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="glass-card table-card">
+        ${
+          filtered.length === 0
+            ? `<div class="empty-state">
+                <div class="empty-icon"><i data-lucide="inbox" style="width:26px;height:26px;"></i></div>
+                <div style="font-weight:700; color:var(--text-main);">Belum ada data surat masuk</div>
+                <p style="font-size:13px; margin-top:4px;">Klik tombol "Tambah Surat Masuk" untuk mencatat surat baru.</p>
+              </div>`
+            : `<div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>No. Agenda / Surat</th>
+                      <th>Pengirim</th>
+                      <th>Perihal & Disposisi</th>
+                      <th>Tgl Diterima</th>
+                      <th>Status</th>
+                      <th>Bukti Scan</th>
+                      <th style="text-align:right;">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filtered.map(item => `
+                      <tr>
+                        <td>
+                          <div style="font-weight:700; color:var(--primary);">${escapeHtml(item.no_agenda)}</div>
+                          <div style="font-size:12px; color:var(--text-muted);">${escapeHtml(item.no_surat)}</div>
+                        </td>
+                        <td style="font-weight:600;">${escapeHtml(item.pengirim)}</td>
+                        <td style="max-width:280px;">
+                          <div style="font-weight:500;">${escapeHtml(item.perihal)}</div>
+                          ${item.disposisi ? `<div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">Disposisi: ${escapeHtml(item.disposisi)}</div>` : ''}
+                        </td>
+                        <td style="white-space:nowrap;">${formatDateID(item.tanggal_diterima)}</td>
+                        <td>
+                          <span class="badge ${item.status === 'Selesai' ? 'badge-green' : item.status === 'Didisposisi' ? 'badge-amber' : 'badge-blue'}">
+                            ${escapeHtml(item.status)}
+                          </span>
+                        </td>
+                        <td>
+                          ${item.bukti_url
+                            ? `<button class="btn btn-soft btn-sm" onclick="window.previewDocument('${escapeHtml(item.bukti_url)}', '${escapeHtml(item.nama_file || item.no_surat)}')">
+                                <i data-lucide="file-check" style="width:14px;height:14px;"></i> Lihat Bukti
+                              </button>`
+                            : `<span class="badge badge-slate">Tidak ada file</span>`
+                          }
+                        </td>
+                        <td style="text-align:right; white-space:nowrap;">
+                          <button class="btn btn-secondary btn-sm" title="Edit" onclick="window.openSuratMasukModal('${item.id}')">
+                            <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+                          </button>
+                          <button class="btn btn-danger-soft btn-sm" title="Hapus" onclick="window.deleteSurat('masuk', '${item.id}')">
+                            <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>`
+        }
+      </div>
+    `;
+  }
+
+  // --------------------------------------------------------------------------
+  // 3. VIEW: SURAT KELUAR
+  // --------------------------------------------------------------------------
+  function renderSuratKeluarPage() {
+    const q = state.searchQuery.toLowerCase();
+    const filtered = state.suratKeluar.filter(item => {
+      const matchText =
+        item.no_agenda.toLowerCase().includes(q) ||
+        item.no_surat.toLowerCase().includes(q) ||
+        item.tujuan.toLowerCase().includes(q) ||
+        item.perihal.toLowerCase().includes(q);
+      const matchStatus = state.filterStatus === 'ALL' || item.status === state.filterStatus;
+      return matchText && matchStatus;
+    });
+
+    return `
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Agenda Surat Keluar</h2>
+          <p class="page-desc">Catat penomoran surat keluar, tujuan instansi, dan unggah bukti tanda terima/ekspedisi.</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.openSuratKeluarModal()">
+          <i data-lucide="plus-circle" style="width:17px;height:17px;"></i> Tambah Surat Keluar
+        </button>
+      </div>
+
+      <div class="glass-card toolbar-card">
+        <div class="search-box">
+          <span class="input-icon"><i data-lucide="search" style="width:16px;height:16px;"></i></span>
+          <input type="text" class="form-control has-icon" placeholder="Cari nomor surat, tujuan, perihal..."
+            value="${escapeHtml(state.searchQuery)}"
+            oninput="window.updateSearch(this.value)" />
+        </div>
+        <div class="filter-group">
+          <select class="form-control" style="width:auto;" onchange="window.updateStatusFilter(this.value)">
+            <option value="ALL" ${state.filterStatus === 'ALL' ? 'selected' : ''}>Semua Status</option>
+            <option value="Draft" ${state.filterStatus === 'Draft' ? 'selected' : ''}>Draft</option>
+            <option value="Terkirim" ${state.filterStatus === 'Terkirim' ? 'selected' : ''}>Terkirim</option>
+            <option value="Diterima Tujuan" ${state.filterStatus === 'Diterima Tujuan' ? 'selected' : ''}>Diterima Tujuan</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="glass-card table-card">
+        ${
+          filtered.length === 0
+            ? `<div class="empty-state">
+                <div class="empty-icon"><i data-lucide="send" style="width:26px;height:26px;"></i></div>
+                <div style="font-weight:700; color:var(--text-main);">Belum ada data surat keluar</div>
+                <p style="font-size:13px; margin-top:4px;">Klik tombol "Tambah Surat Keluar" untuk mencatat surat keluar baru.</p>
+              </div>`
+            : `<div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>No. Agenda / Surat</th>
+                      <th>Tujuan Surat</th>
+                      <th>Perihal</th>
+                      <th>Tgl Surat</th>
+                      <th>Status</th>
+                      <th>Bukti Upload</th>
+                      <th style="text-align:right;">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filtered.map(item => `
+                      <tr>
+                        <td>
+                          <div style="font-weight:700; color:var(--success);">${escapeHtml(item.no_agenda)}</div>
+                          <div style="font-size:12px; color:var(--text-muted);">${escapeHtml(item.no_surat)}</div>
+                        </td>
+                        <td style="font-weight:600;">${escapeHtml(item.tujuan)}</td>
+                        <td style="max-width:280px;">${escapeHtml(item.perihal)}</td>
+                        <td style="white-space:nowrap;">${formatDateID(item.tanggal_surat)}</td>
+                        <td>
+                          <span class="badge ${item.status === 'Diterima Tujuan' ? 'badge-green' : item.status === 'Terkirim' ? 'badge-blue' : 'badge-amber'}">
+                            ${escapeHtml(item.status)}
+                          </span>
+                        </td>
+                        <td>
+                          ${item.bukti_url
+                            ? `<button class="btn btn-soft btn-sm" onclick="window.previewDocument('${escapeHtml(item.bukti_url)}', '${escapeHtml(item.nama_file || item.no_surat)}')">
+                                <i data-lucide="file-check" style="width:14px;height:14px;"></i> Lihat Bukti
+                              </button>`
+                            : `<span class="badge badge-slate">Tidak ada file</span>`
+                          }
+                        </td>
+                        <td style="text-align:right; white-space:nowrap;">
+                          <button class="btn btn-secondary btn-sm" title="Edit" onclick="window.openSuratKeluarModal('${item.id}')">
+                            <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+                          </button>
+                          <button class="btn btn-danger-soft btn-sm" title="Hapus" onclick="window.deleteSurat('keluar', '${item.id}')">
+                            <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>`
+        }
+      </div>
+    `;
+  }
+
+  // --------------------------------------------------------------------------
+  // 4. VIEW: GALERI BUKTI UPLOAD & ARSIP DIGITAL
+  // --------------------------------------------------------------------------
+  function renderGaleriBuktiPage() {
+    const q = state.searchQuery.toLowerCase();
+    const allDocs = [
+      ...state.suratMasuk.filter(s => s.bukti_url).map(s => ({ ...s, kategori: 'Surat Masuk', pihak: s.pengirim })),
+      ...state.suratKeluar.filter(s => s.bukti_url).map(s => ({ ...s, kategori: 'Surat Keluar', pihak: s.tujuan }))
+    ].filter(doc => {
+      const matchType = state.filterGalleryType === 'ALL' || doc.kategori === state.filterGalleryType;
+      const matchText =
+        doc.no_surat.toLowerCase().includes(q) ||
+        doc.perihal.toLowerCase().includes(q) ||
+        doc.pihak.toLowerCase().includes(q) ||
+        (doc.nama_file || '').toLowerCase().includes(q);
+      return matchType && matchText;
+    });
+
+    return `
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Galeri Bukti Upload & Arsip</h2>
+          <p class="page-desc">Kumpulan dokumen hasil pindai (scan), foto tanda terima, dan lampiran bukti surat.</p>
+        </div>
+      </div>
+
+      <div class="glass-card toolbar-card">
+        <div class="search-box">
+          <span class="input-icon"><i data-lucide="search" style="width:16px;height:16px;"></i></span>
+          <input type="text" class="form-control has-icon" placeholder="Cari nama file, nomor surat, atau perihal..."
+            value="${escapeHtml(state.searchQuery)}"
+            oninput="window.updateSearch(this.value)" />
+        </div>
+        <div class="filter-group">
+          <select class="form-control" style="width:auto;" onchange="state.filterGalleryType=this.value; renderCurrentView();">
+            <option value="ALL" ${state.filterGalleryType === 'ALL' ? 'selected' : ''}>Semua Kategori</option>
+            <option value="Surat Masuk" ${state.filterGalleryType === 'Surat Masuk' ? 'selected' : ''}>Bukti Surat Masuk</option>
+            <option value="Surat Keluar" ${state.filterGalleryType === 'Surat Keluar' ? 'selected' : ''}>Bukti Surat Keluar</option>
+          </select>
+        </div>
+      </div>
+
+      ${
+        allDocs.length === 0
+          ? `<div class="glass-card empty-state">
+              <div class="empty-icon"><i data-lucide="folder-search" style="width:26px;height:26px;"></i></div>
+              <div style="font-weight:700; color:var(--text-main);">Belum ada file bukti yang diunggah</div>
+              <p style="font-size:13px; margin-top:4px;">Unggah file PDF atau gambar bukti saat mencatat Surat Masuk maupun Surat Keluar.</p>
+            </div>`
+          : `<div class="gallery-grid">
+              ${allDocs.map(doc => {
+                const isPdf = (doc.nama_file || doc.bukti_url).toLowerCase().includes('.pdf');
+                return `
+                  <div class="glass-card doc-card">
+                    <div>
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span class="badge ${doc.kategori === 'Surat Masuk' ? 'badge-blue' : 'badge-green'}">${doc.kategori}</span>
+                        <span style="font-size:11.5px; color:var(--text-muted);">${formatDateID(doc.tanggal_surat)}</span>
+                      </div>
+                      <div class="doc-preview-thumb" onclick="window.previewDocument('${escapeHtml(doc.bukti_url)}', '${escapeHtml(doc.nama_file || doc.no_surat)}')">
+                        ${isPdf
+                          ? `<i data-lucide="file-text" style="width:38px;height:38px;color:#dc2626;margin-bottom:6px;"></i>
+                             <span style="font-size:12px;font-weight:700;color:var(--text-main);">Dokumen PDF</span>`
+                          : `<img src="${escapeHtml(doc.bukti_url)}" alt="Bukti Surat" />`
+                        }
+                      </div>
+                      <div style="margin-top:12px;">
+                        <div style="font-size:12px; font-weight:700; color:var(--primary);">${escapeHtml(doc.no_surat)}</div>
+                        <div style="font-size:14px; font-weight:700; margin:3px 0; line-height:1.35;">${escapeHtml(doc.perihal)}</div>
+                        <div style="font-size:12px; color:var(--text-muted);">${escapeHtml(doc.pihak)}</div>
+                      </div>
+                    </div>
+                    <div style="display:flex; gap:8px; padding-top:10px; border-top:1px solid #f1f5f9;">
+                      <button class="btn btn-soft btn-sm btn-block" onclick="window.previewDocument('${escapeHtml(doc.bukti_url)}', '${escapeHtml(doc.nama_file || doc.no_surat)}')">
+                        <i data-lucide="maximize-2" style="width:14px;height:14px;"></i> Pratinjau File
+                      </button>
+                      <a href="${escapeHtml(doc.bukti_url)}" download="${escapeHtml(doc.nama_file || 'bukti-surat')}" target="_blank" class="btn btn-secondary btn-sm" title="Unduh">
+                        <i data-lucide="download" style="width:14px;height:14px;"></i>
+                      </a>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>`
+      }
+    `;
+  }
+
+  // --------------------------------------------------------------------------
+  // 5. VIEW: MANAJEMEN STAF (KHUSUS ADMIN)
+  // --------------------------------------------------------------------------
+  function renderManajemenStafPage() {
+    return `
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Manajemen Akun Staf</h2>
+          <p class="page-desc">Kelola akun login staf/unit kerja untuk penginputan surat dan unggah bukti.</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.openStafModal()">
+          <i data-lucide="user-plus" style="width:17px;height:17px;"></i> Tambah Akun Staf
+        </button>
+      </div>
+
+      <div class="glass-card table-card">
+        ${
+          state.stafUsers.length === 0
+            ? `<div class="empty-state">
+                <div class="empty-icon"><i data-lucide="users" style="width:26px;height:26px;"></i></div>
+                <div style="font-weight:700; color:var(--text-main);">Belum ada akun staf terdaftar</div>
+                <p style="font-size:13px; margin-top:4px;">Tambahkan akun staf agar petugas unit dapat login ke aplikasi.</p>
+              </div>`
+            : `<div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nama Lengkap</th>
+                      <th>Username / NIP</th>
+                      <th>Divisi / Unit</th>
+                      <th>Password</th>
+                      <th style="text-align:right;">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${state.stafUsers.map(staf => `
+                      <tr>
+                        <td style="font-weight:700;">${escapeHtml(staf.nama_lengkap)}</td>
+                        <td><span class="badge badge-blue">${escapeHtml(staf.username)}</span></td>
+                        <td>${escapeHtml(staf.divisi)}</td>
+                        <td style="font-family:monospace; color:var(--text-muted);">${escapeHtml(staf.password)}</td>
+                        <td style="text-align:right; white-space:nowrap;">
+                          <button class="btn btn-secondary btn-sm" onclick="window.openStafModal('${staf.id}')">
+                            <i data-lucide="pencil" style="width:14px;height:14px;"></i>
+                          </button>
+                          <button class="btn btn-danger-soft btn-sm" onclick="window.deleteStaf('${staf.id}')">
+                            <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>`
+        }
+      </div>
+    `;
+  }
+
+  // ==========================================================================
+  // HANDLER FILTER & SEARCH
+  // ==========================================================================
+  window.updateSearch = function(val) {
+    state.searchQuery = val;
+    renderCurrentView();
+    const input = document.querySelector('.search-box input');
+    if (input) {
+      input.focus();
+      input.setSelectionRange(val.length, val.length);
+    }
+  };
+
+  window.updateStatusFilter = function(val) {
+    state.filterStatus = val;
+    renderCurrentView();
+  };
+
+  // ==========================================================================
+  // MODAL CRUD: SURAT MASUK
+  // ==========================================================================
+  window.openSuratMasukModal = function(editId = null) {
+    const existing = editId ? state.suratMasuk.find(s => s.id === editId) : null;
+    const today = new Date().toISOString().split('T')[0];
+
+    window.openModal(`
+      <div class="modal-header">
+        <h3 style="font-size:17px; font-weight:800;">${existing ? 'Edit Surat Masuk' : 'Catat Surat Masuk Baru'}</h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeModal()">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <form id="form-surat-masuk">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Nomor Agenda *</label>
+            <input type="text" id="sm-no-agenda" class="form-control" required
+              value="${escapeHtml(existing?.no_agenda || `AGD-M/${new Date().getFullYear()}/00${state.suratMasuk.length + 1}`)}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor Surat Asal *</label>
+            <input type="text" id="sm-no-surat" class="form-control" placeholder="Contoh: 005/UND/XI/2026" required
+              value="${escapeHtml(existing?.no_surat || '')}" />
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Tanggal Surat *</label>
+            <input type="date" id="sm-tgl-surat" class="form-control" required
+              value="${existing?.tanggal_surat || today}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tanggal Diterima *</label>
+            <input type="date" id="sm-tgl-terima" class="form-control" required
+              value="${existing?.tanggal_diterima || today}" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Instansi / Pengirim *</label>
+          <input type="text" id="sm-pengirim" class="form-control" placeholder="Nama instansi atau pengirim surat" required
+            value="${escapeHtml(existing?.pengirim || '')}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Perihal Surat *</label>
+          <textarea id="sm-perihal" class="form-control" placeholder="Ringkasan isi atau perihal surat" required>${escapeHtml(existing?.perihal || '')}</textarea>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Disposisi / Tujuan Unit</label>
+            <input type="text" id="sm-disposisi" class="form-control" placeholder="Contoh: Kepala Bagian Umum"
+              value="${escapeHtml(existing?.disposisi || '')}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status Tindak Lanjut</label>
+            <select id="sm-status" class="form-control">
+              <option value="Diterima" ${existing?.status === 'Diterima' ? 'selected' : ''}>Diterima</option>
+              <option value="Didisposisi" ${existing?.status === 'Didisposisi' ? 'selected' : ''}>Didisposisi</option>
+              <option value="Selesai" ${existing?.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Upload Bukti Scan Surat (PDF / JPG / PNG)</label>
+          <label class="upload-zone ${existing?.bukti_url ? 'has-file' : ''}" id="sm-upload-label" style="display:block;">
+            <input type="file" id="sm-file-input" accept=".pdf,image/*" style="display:none;"
+              onchange="document.getElementById('sm-file-name').textContent = this.files[0]?.name || 'Pilih file bukti'" />
+            <i data-lucide="upload-cloud" style="width:26px;height:26px;color:var(--primary);margin-bottom:6px;"></i>
+            <div id="sm-file-name" style="font-size:13px;font-weight:700;color:var(--text-main);">
+              ${existing?.nama_file ? `File terlampir: ${escapeHtml(existing.nama_file)}` : 'Klik untuk memilih file scan surat'}
+            </div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">Maksimal 5MB (Format PDF, JPG, PNG)</div>
+          </label>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <button type="button" class="btn btn-secondary" onclick="window.closeModal()">Batal</button>
+          <button type="submit" id="btn-save-sm" class="btn btn-primary">
+            <i data-lucide="save" style="width:16px;height:16px;"></i> Simpan Data
+          </button>
+        </div>
+      </form>
+    `);
+
+    document.getElementById('form-surat-masuk').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-sm');
+      btn.disabled = true;
+
+      try {
+        const fileInput = document.getElementById('sm-file-input');
+        const file = fileInput.files[0];
+        let buktiUrl = existing?.bukti_url || null;
+        let namaFile = existing?.nama_file || null;
+
+        if (file) {
+          const uploaded = await uploadBuktiFile(file, 'masuk');
+          buktiUrl = uploaded.url;
+          namaFile = uploaded.name;
+        }
+
+        const payload = {
+          no_agenda: document.getElementById('sm-no-agenda').value.trim(),
+          no_surat: document.getElementById('sm-no-surat').value.trim(),
+          tanggal_surat: document.getElementById('sm-tgl-surat').value,
+          tanggal_diterima: document.getElementById('sm-tgl-terima').value,
+          pengirim: document.getElementById('sm-pengirim').value.trim(),
+          perihal: document.getElementById('sm-perihal').value.trim(),
+          disposisi: document.getElementById('sm-disposisi').value.trim(),
+          status: document.getElementById('sm-status').value,
+          bukti_url: buktiUrl,
+          nama_file: namaFile,
+          diinput_oleh: state.user.name
+        };
+
+        if (IS_PREVIEW) {
+          if (existing) {
+            const idx = state.suratMasuk.findIndex(s => s.id === existing.id);
+            state.suratMasuk[idx] = { ...existing, ...payload };
+          } else {
+            state.suratMasuk.unshift({
+              id: 'sm-' + Date.now(),
+              ...payload,
+              created_at: new Date().toISOString()
+            });
+          }
+        } else {
+          if (existing) {
+            const { error } = await supabase.from('surat_masuk').update(payload).eq('id', existing.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('surat_masuk').insert([payload]);
+            if (error) throw error;
+          }
+          await fetchAllDataFromSupabase();
+        }
+
+        window.closeModal();
+        renderCurrentView();
+        showToast(existing ? 'Surat masuk berhasil diperbarui' : 'Surat masuk berhasil disimpan', 'success');
+      } catch (err) {
+        showToast(err.message || 'Gagal menyimpan surat masuk', 'error');
+        btn.disabled = false;
+      }
+    });
+  };
+
+  // ==========================================================================
+  // MODAL CRUD: SURAT KELUAR
+  // ==========================================================================
+  window.openSuratKeluarModal = function(editId = null) {
+    const existing = editId ? state.suratKeluar.find(s => s.id === editId) : null;
+    const today = new Date().toISOString().split('T')[0];
+
+    window.openModal(`
+      <div class="modal-header">
+        <h3 style="font-size:17px; font-weight:800;">${existing ? 'Edit Surat Keluar' : 'Catat Surat Keluar Baru'}</h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeModal()">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <form id="form-surat-keluar">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Nomor Agenda *</label>
+            <input type="text" id="sk-no-agenda" class="form-control" required
+              value="${escapeHtml(existing?.no_agenda || `AGD-K/${new Date().getFullYear()}/00${state.suratKeluar.length + 1}`)}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor Surat Keluar *</label>
+            <input type="text" id="sk-no-surat" class="form-control" placeholder="Contoh: 421/109/TU/XI/2026" required
+              value="${escapeHtml(existing?.no_surat || '')}" />
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Tanggal Surat *</label>
+            <input type="date" id="sk-tgl-surat" class="form-control" required
+              value="${existing?.tanggal_surat || today}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status Pengiriman</label>
+            <select id="sk-status" class="form-control">
+              <option value="Draft" ${existing?.status === 'Draft' ? 'selected' : ''}>Draft</option>
+              <option value="Terkirim" ${existing?.status === 'Terkirim' ? 'selected' : ''}>Terkirim</option>
+              <option value="Diterima Tujuan" ${existing?.status === 'Diterima Tujuan' ? 'selected' : ''}>Diterima Tujuan</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tujuan Instansi / Penerima *</label>
+          <input type="text" id="sk-tujuan" class="form-control" placeholder="Nama instansi atau pihak penerima surat" required
+            value="${escapeHtml(existing?.tujuan || '')}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Perihal Surat *</label>
+          <textarea id="sk-perihal" class="form-control" placeholder="Ringkasan isi atau perihal surat keluar" required>${escapeHtml(existing?.perihal || '')}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Upload Bukti Surat / Tanda Terima (PDF / JPG / PNG)</label>
+          <label class="upload-zone ${existing?.bukti_url ? 'has-file' : ''}" style="display:block;">
+            <input type="file" id="sk-file-input" accept=".pdf,image/*" style="display:none;"
+              onchange="document.getElementById('sk-file-name').textContent = this.files[0]?.name || 'Pilih file bukti'" />
+            <i data-lucide="upload-cloud" style="width:26px;height:26px;color:var(--primary);margin-bottom:6px;"></i>
+            <div id="sk-file-name" style="font-size:13px;font-weight:700;color:var(--text-main);">
+              ${existing?.nama_file ? `File terlampir: ${escapeHtml(existing.nama_file)}` : 'Klik untuk memilih file bukti pengiriman / arsip'}
+            </div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">Maksimal 5MB (Format PDF, JPG, PNG)</div>
+          </label>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <button type="button" class="btn btn-secondary" onclick="window.closeModal()">Batal</button>
+          <button type="submit" id="btn-save-sk" class="btn btn-primary">
+            <i data-lucide="save" style="width:16px;height:16px;"></i> Simpan Data
+          </button>
+        </div>
+      </form>
+    `);
+
+    document.getElementById('form-surat-keluar').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-sk');
+      btn.disabled = true;
+
+      try {
+        const fileInput = document.getElementById('sk-file-input');
+        const file = fileInput.files[0];
+        let buktiUrl = existing?.bukti_url || null;
+        let namaFile = existing?.nama_file || null;
+
+        if (file) {
+          const uploaded = await uploadBuktiFile(file, 'keluar');
+          buktiUrl = uploaded.url;
+          namaFile = uploaded.name;
+        }
+
+        const payload = {
+          no_agenda: document.getElementById('sk-no-agenda').value.trim(),
+          no_surat: document.getElementById('sk-no-surat').value.trim(),
+          tanggal_surat: document.getElementById('sk-tgl-surat').value,
+          tujuan: document.getElementById('sk-tujuan').value.trim(),
+          perihal: document.getElementById('sk-perihal').value.trim(),
+          status: document.getElementById('sk-status').value,
+          bukti_url: buktiUrl,
+          nama_file: namaFile,
+          diinput_oleh: state.user.name
+        };
+
+        if (IS_PREVIEW) {
+          if (existing) {
+            const idx = state.suratKeluar.findIndex(s => s.id === existing.id);
+            state.suratKeluar[idx] = { ...existing, ...payload };
+          } else {
+            state.suratKeluar.unshift({
+              id: 'sk-' + Date.now(),
+              ...payload,
+              created_at: new Date().toISOString()
+            });
+          }
+        } else {
+          if (existing) {
+            const { error } = await supabase.from('surat_keluar').update(payload).eq('id', existing.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('surat_keluar').insert([payload]);
+            if (error) throw error;
+          }
+          await fetchAllDataFromSupabase();
+        }
+
+        window.closeModal();
+        renderCurrentView();
+        showToast(existing ? 'Surat keluar berhasil diperbarui' : 'Surat keluar berhasil disimpan', 'success');
+      } catch (err) {
+        showToast(err.message || 'Gagal menyimpan surat keluar', 'error');
+        btn.disabled = false;
+      }
+    });
+  };
+
+  // ==========================================================================
+  // MODAL CRUD: MANAJEMEN STAF (KHUSUS ADMIN)
+  // ==========================================================================
+  window.openStafModal = function(editId = null) {
+    const existing = editId ? state.stafUsers.find(u => u.id === editId) : null;
+
+    window.openModal(`
+      <div class="modal-header">
+        <h3 style="font-size:17px; font-weight:800;">${existing ? 'Edit Akun Staf' : 'Tambah Akun Staf Baru'}</h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeModal()">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <form id="form-staf">
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap & Gelar *</label>
+          <input type="text" id="staf-nama" class="form-control" placeholder="Contoh: Budi Santoso, S.Kom" required
+            value="${escapeHtml(existing?.nama_lengkap || '')}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Divisi / Unit Kerja *</label>
+          <input type="text" id="staf-divisi" class="form-control" placeholder="Contoh: Subbagian Umum & Kepegawaian" required
+            value="${escapeHtml(existing?.divisi || '')}" />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Username / NIP Login *</label>
+            <input type="text" id="staf-username" class="form-control" placeholder="staf02" required
+              value="${escapeHtml(existing?.username || '')}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kata Sandi Login *</label>
+            <input type="text" id="staf-password" class="form-control" placeholder="Minimal 4 karakter" required
+              value="${escapeHtml(existing?.password || '')}" />
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <button type="button" class="btn btn-secondary" onclick="window.closeModal()">Batal</button>
+          <button type="submit" id="btn-save-staf" class="btn btn-primary">
+            <i data-lucide="save" style="width:16px;height:16px;"></i> Simpan Akun
+          </button>
+        </div>
+      </form>
+    `);
+
+    document.getElementById('form-staf').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-staf');
+      btn.disabled = true;
+
+      try {
+        const payload = {
+          nama_lengkap: document.getElementById('staf-nama').value.trim(),
+          divisi: document.getElementById('staf-divisi').value.trim(),
+          username: document.getElementById('staf-username').value.trim(),
+          password: document.getElementById('staf-password').value.trim()
+        };
+
+        if (IS_PREVIEW) {
+          if (existing) {
+            const idx = state.stafUsers.findIndex(u => u.id === existing.id);
+            state.stafUsers[idx] = { ...existing, ...payload };
+          } else {
+            state.stafUsers.unshift({ id: 'staf-' + Date.now(), ...payload });
+          }
+        } else {
+          if (existing) {
+            const { error } = await supabase.from('staf_users').update(payload).eq('id', existing.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('staf_users').insert([payload]);
+            if (error) throw error;
+          }
+          await fetchAllDataFromSupabase();
+        }
+
+        window.closeModal();
+        renderCurrentView();
+        showToast('Data akun staf berhasil disimpan', 'success');
+      } catch (err) {
+        showToast(err.message || 'Gagal menyimpan data staf', 'error');
+        btn.disabled = false;
+      }
+    });
+  };
+
+  // ==========================================================================
+  // HAPUS DATA (KONFIRMASI VIA MODAL KUSTOM, TANPA CONFIRM() BAWAAN BROWSER)
+  // ==========================================================================
+  window.deleteSurat = function(jenis, id) {
+    const label = jenis === 'masuk' ? 'Surat Masuk' : 'Surat Keluar';
+    window.openModal(`
+      <div style="text-align:center; padding:10px 0;">
+        <div style="width:52px;height:52px;border-radius:50%;background:#fef2f2;color:#dc2626;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;">
+          <i data-lucide="alert-triangle" style="width:26px;height:26px;"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:6px;">Hapus ${label}?</h3>
+        <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:22px;">
+          Data agenda surat beserta tautan bukti akan dihapus secara permanen.
+        </p>
+        <div style="display:flex;justify-content:center;gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="window.closeModal()">Batal</button>
+          <button type="button" class="btn btn-primary" style="background:var(--danger);" id="btn-confirm-del">
+            Ya, Hapus Data
+          </button>
+        </div>
+      </div>
+    `);
+
+    document.getElementById('btn-confirm-del').onclick = async () => {
+      try {
+        if (IS_PREVIEW) {
+          if (jenis === 'masuk') {
+            state.suratMasuk = state.suratMasuk.filter(s => s.id !== id);
+          } else {
+            state.suratKeluar = state.suratKeluar.filter(s => s.id !== id);
+          }
+        } else {
+          const table = jenis === 'masuk' ? 'surat_masuk' : 'surat_keluar';
+          const { error } = await supabase.from(table).delete().eq('id', id);
+          if (error) throw error;
+          await fetchAllDataFromSupabase();
+        }
+        window.closeModal();
+        renderCurrentView();
+        showToast(`${label} berhasil dihapus`, 'success');
+      } catch (err) {
+        showToast(err.message || 'Gagal menghapus data', 'error');
+      }
+    };
+  };
+
+  window.deleteStaf = function(id) {
+    window.openModal(`
+      <div style="text-align:center; padding:10px 0;">
+        <div style="width:52px;height:52px;border-radius:50%;background:#fef2f2;color:#dc2626;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;">
+          <i data-lucide="user-x" style="width:26px;height:26px;"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:6px;">Hapus Akun Staf?</h3>
+        <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:22px;">
+          Staf tidak akan dapat login kembali setelah akun dihapus.
+        </p>
+        <div style="display:flex;justify-content:center;gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="window.closeModal()">Batal</button>
+          <button type="button" class="btn btn-primary" style="background:var(--danger);" id="btn-confirm-del-staf">
+            Ya, Hapus Akun
+          </button>
+        </div>
+      </div>
+    `);
+
+    document.getElementById('btn-confirm-del-staf').onclick = async () => {
+      try {
+        if (IS_PREVIEW) {
+          state.stafUsers = state.stafUsers.filter(u => u.id !== id);
+        } else {
+          const { error } = await supabase.from('staf_users').delete().eq('id', id);
+          if (error) throw error;
+          await fetchAllDataFromSupabase();
+        }
+        window.closeModal();
+        renderCurrentView();
+        showToast('Akun staf berhasil dihapus', 'success');
+      } catch (err) {
+        showToast(err.message || 'Gagal menghapus akun staf', 'error');
+      }
+    };
+  };
+
+  // ==========================================================================
+  // MODAL PRATINJAU FILE BUKTI (GAMBAR & PDF)
+  // ==========================================================================
+  window.previewDocument = function(url, title) {
+    const isPdf = (title + url).toLowerCase().includes('.pdf');
+    window.openModal(`
+      <div class="modal-header">
+        <div style="overflow:hidden; padding-right:12px;">
+          <h3 style="font-size:16px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            Pratinjau Bukti: ${escapeHtml(title)}
+          </h3>
+        </div>
+        <div style="display:flex; gap:8px; flex-shrink:0;">
+          <a href="${escapeHtml(url)}" download="${escapeHtml(title)}" target="_blank" class="btn btn-soft btn-sm">
+            <i data-lucide="download" style="width:14px;height:14px;"></i> Unduh
+          </a>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeModal()">
+            <i data-lucide="x" style="width:16px;height:16px;"></i>
+          </button>
+        </div>
+      </div>
+      <div style="background:#f1f5f9; border-radius:14px; overflow:hidden; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center; min-height:340px;">
+        ${isPdf
+          ? `<iframe src="${escapeHtml(url)}" style="width:100%; height:460px; border:none;"></iframe>`
+          : `<img src="${escapeHtml(url)}" alt="${escapeHtml(title)}" style="max-width:100%; max-height:480px; object-fit:contain;" />`
+        }
+      </div>
+    `);
+  };
+
+  // ==========================================================================
+  // INISIALISASI AWAL SAAT HALAMAN DIMUAT
+  // ==========================================================================
+  async function bootstrapApp() {
+    if (IS_PREVIEW) {
+      document.getElementById('esurat-root-shell').classList.add('has-preview-banner');
+      document.getElementById('preview-banner').classList.remove('hidden');
+      document.getElementById('preview-quick-login').classList.remove('hidden');
+      initPreviewDummyData();
+    } else {
+      // Pastikan elemen preview 100% tersembunyi & cek sesi login aktif
+      document.getElementById('preview-banner').remove();
+      document.getElementById('preview-quick-login').remove();
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          state.user = {
+            role: 'admin',
+            name: session.user.email.split('@')[0].toUpperCase(),
+            identifier: session.user.email,
+            divisi: 'Administrator Utama'
+          };
+          await enterAppShell();
+          lucide.createIcons();
+          return;
+        }
+
+        const savedStaf = localStorage.getItem('esurat_session');
+        if (savedStaf) {
+          const parsed = JSON.parse(savedStaf);
+          if (parsed && parsed.role === 'staf') {
+            state.user = parsed;
+            await enterAppShell();
+            lucide.createIcons();
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Session check error:', e);
+      }
+    }
+
+    lucide.createIcons();
+  }
+
+  bootstrapApp();
+</script>
+</body>
+</html>
